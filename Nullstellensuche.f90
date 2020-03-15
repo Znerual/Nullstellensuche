@@ -17,7 +17,7 @@
     implicit none
 
     integer :: j, k, l
-    double precision, parameter :: stepwidth = 0.5d0
+    double precision, parameter :: stepwidth = 0.5d-2
     double precision :: posa = -1.5d0, posb = -1.5d0
     integer, parameter :: steps = 3d0/stepwidth
     integer :: iteration_steps
@@ -32,15 +32,13 @@
     open(2, file="nullstellen_pos.dat")
     
     print*, 'Steps: ' , steps , ' at stepwidth ' , stepwidth
-
-    !print*, 'Anzahl an Schritten ', ' Re(f(a,b)): ' , ' Im(f(a,b)) '
     do k= 0, steps
         posb = k*stepwidth - 15d-1
 
         do j = 0, steps
             posa = j*stepwidth - 15d-1
-            !call newton(posa, posb, nullstelle_re, nullstelle_im, iteration_steps, error_flag)
-            call newtonComplex(posa, posb, z, iteration_steps, error_flag)
+            call newton(posa, posb, nullstelle_re, nullstelle_im, iteration_steps, error_flag)
+            !call newtonComplex(posa, posb, z, iteration_steps, error_flag) !Versuch mit der Komplexen Funtkoin zu arbeiten
             if (error_flag .eqv. .false.) then
                 write(1,fmt='(I3.3, 1X, F6.3, 1X, F6.3)') iteration_steps, posa, posb !write into file
             else
@@ -48,36 +46,29 @@
             end if
             nullstelle_enthalten = .false.
             do l = 1, nullstellen_counter
-                !if (abs(nullstellen(l,1) - nullstelle_re) < 10d-2 .and. abs(nullstellen(l,2) - nullstelle_im) < 10d-2) then
-                if (abs(nullstellen(l,1) - real(z)) < 10d-6 .and. abs(nullstellen(l,2) - aimag(z)) < 10d-6) then
+                if (abs(nullstellen(l,1) - nullstelle_re) < 10d-2 .and. abs(nullstellen(l,2) - nullstelle_im) < 10d-2) then
+                !if (abs(nullstellen(l,1) - real(z)) < 10d-6 .and. abs(nullstellen(l,2) - aimag(z)) < 10d-6) then
                     nullstelle_enthalten = .true.
                     exit
                 end if               
             end do
             if (nullstelle_enthalten .eqv. .false.) then
-                !nullstellen(nullstellen_counter, 1) = nullstelle_re
-                nullstellen(nullstellen_counter, 1) = real(z)
-                !nullstellen(nullstellen_counter, 2) = nullstelle_im
-                nullstellen(nullstellen_counter, 2) = aimag(z)
+                nullstellen(nullstellen_counter, 1) = nullstelle_re
+                !nullstellen(nullstellen_counter, 1) = real(z)
+                nullstellen(nullstellen_counter, 2) = nullstelle_im
+                !nullstellen(nullstellen_counter, 2) = aimag(z)
                 nullstellen_counter = nullstellen_counter + 1
-                write(2,fmt='(F8.4,1X, F8.4)') real(z), aimag(z)
-                !write(2,fmt='(F8.4,1X, F8.4)') nullstelle_re, nullstelle_im
+                !write(2,fmt='(F8.4,1X, F8.4)') real(z), aimag(z)
+                write(2,fmt='(F8.4,1X, F8.4)') nullstelle_re, nullstelle_im
             end if
         end do
         write(1,*)
-        !print*, ' '
         posa = -1.5d0
     end do
     
     close(1)
     close(2)
-    !	a = -0.9d0
-    !	b = 1.1d0
-
-    !call newton(0d0, -15d-1, map(k+1,j+1))
-
-
-    !	print*, 'Anzahl an Schritten: ', i, 'a ' , a , ' Re(f(a,b)): ' , rs, ' b ', b , ' Im(f(a,b)) ' , is
+    
     end program Nullstellensuche
 
     subroutine newton(aInput,bInput,a ,b,i,error) ! Real und Imaginärteil des Startwerts und Anzahl der Iterationen
@@ -94,7 +85,7 @@
             call f(a,b,rs,is)
             call fa(a,b, ra, ia)
             call fb(a,b, rb, ib)
-            !a = (rs - a* ra) / ra
+            !a = (rs - a* ra) / ra !liefert das gleiche Ergebnis
             a = a - rs / ra
             !b = (is - b*ib) / ib
             b = b - is / ib
@@ -129,7 +120,7 @@
         
     
     end subroutine
-    subroutine f(a, b, re, im)
+    subroutine f(a, b, re, im) !Funktionswert an der Stelle z=a+i b zurückgegeben als real und imaginärteil aufgeteilt
         implicit none
         double precision :: a,b, re, im
         re = a**4 - 6*a**2*b**2 + b**4 -1
@@ -138,7 +129,7 @@
         !im = 2 * a * b
         return
     end subroutine
-    subroutine fa(a,b,re,im)
+    subroutine fa(a,b,re,im) !Funktionswert an der Ableitung nach a an der Stelle z=a+i b zurückgegeben als real und imaginärteil aufgeteilt
         implicit none
         double precision :: a, b, re, im
         re = 4*a**3 - 12*a*b**2
